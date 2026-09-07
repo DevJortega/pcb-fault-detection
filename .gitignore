@@ -1,0 +1,25 @@
+# Entorno virtual de Python
+.venv/
+
+# Cache de bytecode
+__pycache__/
+
+# Checkpoints de Jupyter
+.ipynb_checkpoints/
+
+# Parches generados por el notebook (2953 imágenes, se regeneran al ejecutarlo)
+patches/
+
+# Credenciales
+.kaggle/
+kaggle.json
+access_token
+.env
+*.env
+.kaggle.
+
+# Modelo entrenado (~100 MB, supera el límite de GitHub sin Git LFS)
+mejor_resnet50_pcb.keras
+
+# Notebook original sin documentar (se conserva localmente como respaldo)
+ResNet50_PCB_ipynb.ipynb
