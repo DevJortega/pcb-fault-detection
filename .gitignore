@@ -26,5 +26,6 @@ mejor_resnet50_pcb.keras
 mejor_resnet50_finetuned.keras
 *.keras
 
-# Notebook original sin documentar (se conserva localmente como respaldo)
-ResNet50_PCB_ipynb.ipynb
+# Figuras extraídas del notebook para la presentación: se regeneran
+# ejecutando generar_diapositivas.py (que las extrae del notebook)
+figuras/
