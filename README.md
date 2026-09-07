@@ -1,8 +1,8 @@
 # Detección de defectos en placas PCB
 
 Clasificación de **6 tipos de defectos** en placas de circuito impreso (PCB) mediante
-visión por computador, comparando **4 enfoques metodológicos** que van desde la
-extracción de características totalmente manual hasta deep learning end-to-end.
+visión por computador, comparando **5 enfoques metodológicos** que van desde la
+extracción de características totalmente manual hasta deep learning con fine-tuning.
 
 El objetivo no es solo obtener el mejor modelo, sino entender **por qué** un enfoque
 supera a otro en un dominio —la inspección óptica de PCBs— cuya física es muy distinta
@@ -53,7 +53,7 @@ agrupando por placa (`groups='placa'`), garantizando que todos los parches de un
 placa caen en un único conjunto: **2078 train / 433 val / 442 test**, verificado sin
 solapamiento.
 
-## Los 4 pipelines
+## Los 5 pipelines
 
 Ordenados de más manual/interpretable a más automático:
 
@@ -65,38 +65,53 @@ Ordenados de más manual/interpretable a más automático:
 3. **Features ResNet50 + ML clásico**: ResNet50 preentrenada en ImageNet y congelada
    actúa solo como extractor (vector de 2048 valores tras GlobalAveragePooling),
    clasificado con SVM y Random Forest.
-4. **ResNet50 end-to-end**: ResNet50 congelada + cabeza densa entrenable,
-   clasificando directamente desde los píxeles.
+4. **ResNet50 end-to-end (pesos congelados)**: ResNet50 congelada + cabeza densa
+   entrenable, clasificando directamente desde los píxeles. Este es el enfoque pedido
+   como requisito del ejercicio (pesos preentrenados congelados).
+5. **ResNet50 con fine-tuning parcial** *(experimento adicional, no reemplaza al
+   Pipeline 4)*: partiendo del modelo del Pipeline 4 ya entrenado, se descongela
+   únicamente el último bloque convolucional de ResNet50 (`conv5_x`) y se continúa el
+   entrenamiento con una tasa de aprendizaje muy baja (`1e-5`) para evitar destruir los
+   pesos preentrenados (*catastrophic forgetting*). Se incluye solo para explorar, de
+   forma comparativa, si permitir que el backbone se adapte un poco cierra la brecha
+   frente a las características manuales.
 
 ## Resultados (F1-macro, conjunto de prueba)
 
 | Pipeline | Extracción | Clasificador | F1-macro |
 |---|---|---|---|
-| Manual + Random Forest | Manual | ML | **0.8839** |
-| Manual + MLP | Manual | Red Neuronal | 0.8734 |
+| ResNet50 fine-tuning (conv5_x) | Deep Learning | Deep Learning | **0.9580** |
+| Manual + Random Forest | Manual | ML | 0.8839 |
 | Manual + SVM (RBF) | Manual | ML | 0.8658 |
+| ResNet50 end-to-end (congelada) | Deep Learning | Deep Learning | 0.8575 |
 | Features ResNet50 + SVM (RBF) | Deep Learning | ML | 0.8495 |
-| ResNet50 end-to-end | Deep Learning | Deep Learning | 0.8463 |
+| Manual + MLP | Manual | Red Neuronal | 0.8418 |
 
-(Random Forest sobre características manuales alcanzó además 89.8% de accuracy;
-ResNet50 end-to-end, 85.5% de accuracy en prueba.)
+(El fine-tuning parcial alcanzó además 95.9% de accuracy en prueba; Random Forest sobre
+características manuales, 88.4% F1-macro; ResNet50 end-to-end congelada, 85.7% F1-macro.)
 
 ## Hallazgos principales
 
-- **Las características manuales superaron a las características profundas
-  congeladas**, en los tres enfoques que las usan. La razón es un desajuste de
-  dominio: ResNet50 fue preentrenada en **ImageNet**, un conjunto de fotografías de
-  objetos naturales, mientras que una **PCB es geometría sintética** (líneas rectas de
-  cobre, ángulos rectos, texturas repetitivas). Los descriptores geométricos manuales,
-  en cambio, codifican directamente la física del defecto: si una región de cobre está
-  conectada o aislada, qué tan elongada o compacta es.
-- **`missing_hole` se clasifica de forma perfecta o casi perfecta en todos los
+- **El fine-tuning parcial (Pipeline 5) supera con margen amplio a todos los demás
+  enfoques**, incluyendo las características manuales. Esto no invalida la hipótesis
+  del desajuste de dominio — la **refuerza y la refina**: ResNet50 preentrenada en
+  **ImageNet** (objetos naturales) no encaja bien con la geometría sintética de una PCB
+  mientras sus pesos permanecen **congelados**, pero en cuanto se le permite adaptar su
+  bloque convolucional más profundo (`conv5_x`) al dominio, con una tasa de aprendizaje
+  lo bastante baja para no destruir el preentrenamiento, termina encontrando una
+  representación mejor que cualquier descriptor manual.
+- **Sin fine-tuning, las características manuales superan a las características
+  profundas congeladas** (Pipelines 1–2 por encima de los Pipelines 3–4): los
+  descriptores geométricos codifican directamente la física del defecto (si el cobre
+  está conectado o aislado), mientras que los filtros de ImageNet congelados no.
+- **`missing_hole` se clasifica de forma perfecta o casi perfecta en los cinco
   enfoques**: es el único defecto que es una ausencia total de material, con una firma
   geométrica inconfundible (un círculo faltante).
-- **`spur` es el cuello de botella en los cuatro pipelines** (recall entre 0.45 y
-  0.70 según el modelo), confundido principalmente con `mouse_bite`. Ambos son
-  variaciones sutiles del borde de una pista de cobre, y sus firmas de HOG/LBP/
-  geometría se solapan considerablemente.
+- **`spur` es el cuello de botella en los cuatro primeros pipelines** (recall entre
+  0.45 y 0.70), confundido principalmente con `mouse_bite` — pero su recall **salta a
+  0.89 en el Pipeline 5**. Esto sugiere que la dificultad no era una ambigüedad
+  intrínseca e irresoluble entre ambas clases, sino una limitación de las
+  representaciones disponibles hasta ese punto.
 
 ## Instalación y uso
 
@@ -125,23 +140,24 @@ el suyo propio desde su cuenta de Kaggle.
 ### 3. Ejecutar el notebook
 
 ```bash
-jupyter notebook PCB_Defectos_4Pipelines_Documentado.ipynb
+jupyter notebook PCB_Defectos_5Pipelines_Documentado.ipynb
 ```
 
 El notebook está documentado de principio a fin: descarga el dataset, genera los
-parches, entrena los 4 pipelines y produce todas las métricas y visualizaciones.
+parches, entrena los 5 pipelines y produce todas las métricas y visualizaciones.
 
-### Nota sobre el modelo entrenado
+### Nota sobre los modelos entrenados
 
-El checkpoint del Pipeline 4 (`mejor_resnet50_pcb.keras`, ~100 MB) **no se incluye en
-el repositorio** por su tamaño (supera cómodamente lo razonable para Git sin LFS). Se
-regenera automáticamente al ejecutar el notebook completo.
+Los checkpoints de los Pipelines 4 y 5 (`mejor_resnet50_pcb.keras`,
+`mejor_resnet50_finetuned.keras`, ~100 MB cada uno) **no se incluyen en el
+repositorio** por su tamaño (superan cómodamente lo razonable para Git sin LFS). Se
+regeneran automáticamente al ejecutar el notebook completo.
 
 ## Estructura del repositorio
 
 ```
 pcb-fault-detection/
-├── PCB_Defectos_4Pipelines_Documentado.ipynb   # Notebook principal, documentado y ejecutado
+├── PCB_Defectos_5Pipelines_Documentado.ipynb   # Notebook principal, documentado y ejecutado
 ├── README.md
 ├── requirements.txt
 └── .gitignore

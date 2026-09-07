@@ -1,3 +1,6 @@
+# Estado local de Claude Code (no es parte del proyecto)
+.claude/
+
 # Entorno virtual de Python
 .venv/
 
@@ -18,8 +21,10 @@ access_token
 *.env
 .kaggle.
 
-# Modelo entrenado (~100 MB, supera el límite de GitHub sin Git LFS)
+# Modelos entrenados (~100 MB c/u, superan el límite de GitHub sin Git LFS)
 mejor_resnet50_pcb.keras
+mejor_resnet50_finetuned.keras
+*.keras
 
 # Notebook original sin documentar (se conserva localmente como respaldo)
 ResNet50_PCB_ipynb.ipynb
