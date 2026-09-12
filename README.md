@@ -68,12 +68,11 @@ Ordenados de más manual/interpretable a más automático:
 4. **ResNet50 end-to-end (pesos congelados)**: ResNet50 congelada + cabeza densa
    entrenable, clasificando directamente desde los píxeles. Este es el enfoque pedido
    como requisito del ejercicio (pesos preentrenados congelados).
-5. **ResNet50 con fine-tuning parcial** *(experimento adicional, no reemplaza al
-   Pipeline 4)*: partiendo del modelo del Pipeline 4 ya entrenado, se descongela
-   únicamente el último bloque convolucional de ResNet50 (`conv5_x`) y se continúa el
-   entrenamiento con una tasa de aprendizaje muy baja (`1e-5`) para evitar destruir los
-   pesos preentrenados (*catastrophic forgetting*). Se incluye solo para explorar, de
-   forma comparativa, si permitir que el backbone se adapte un poco cierra la brecha
+5. **ResNet50 con fine-tuning parcial**: partiendo del modelo del Pipeline 4 ya
+   entrenado, se descongela únicamente el último bloque convolucional de ResNet50
+   (`conv5_x`) y se continúa el entrenamiento con una tasa de aprendizaje muy baja
+   (`1e-5`) para evitar destruir los pesos preentrenados (*catastrophic forgetting*).
+   Permite evaluar si dejar que el backbone se adapte al dominio cierra la brecha
    frente a las características manuales.
 
 ## Resultados (F1-macro, conjunto de prueba)
@@ -165,4 +164,5 @@ pcb-fault-detection/
 
 ## Entorno usado
 
-Ubuntu 24.04, NVIDIA RTX 4060 (8 GB VRAM), TensorFlow 2.21 con soporte CUDA.
+Ubuntu 24.04, NVIDIA GeForce RTX 4060 Laptop GPU (8 GB VRAM, compute capability 8.9),
+entorno virtual de Python 3.12, TensorFlow 2.21 con CUDA 12.5.1 y cuDNN 9.
