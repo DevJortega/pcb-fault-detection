@@ -4,10 +4,10 @@ Clasificación de **6 tipos de defectos** en placas de circuito impreso (PCB) me
 visión por computador, comparando **5 enfoques metodológicos** que van desde la
 extracción de características totalmente manual hasta deep learning con fine-tuning.
 
-El objetivo no es solo obtener el mejor modelo, sino entender **por qué** un enfoque
-supera a otro en un dominio —la inspección óptica de PCBs— cuya física es muy distinta
-a la de las imágenes naturales para las que las redes preentrenadas (ImageNet) fueron
-diseñadas.
+El objetivo no es solo obtener el mejor modelo. Es entender **por qué** un enfoque
+supera a otro en un dominio, la inspección óptica de PCBs, cuya física es muy distinta
+a la de las imágenes naturales para las que se diseñaron las redes preentrenadas
+(ImageNet).
 
 ## Los 6 tipos de defecto
 
@@ -47,11 +47,10 @@ mayor, generando 2953 parches donde el defecto es la señal dominante.
 ### Por qué el split se agrupa por placa
 
 Cada placa aporta entre 3 y 5 parches. Un split aleatorio a nivel de parche dejaría
-parches de la misma placa en train y en test simultáneamente — **fuga de datos**: el
-modelo ya conocería esa plantilla específica. El split usa `GroupShuffleSplit`
-agrupando por placa (`groups='placa'`), garantizando que todos los parches de una
-placa caen en un único conjunto: **2078 train / 433 val / 442 test**, verificado sin
-solapamiento.
+parches de la misma placa en train y en test a la vez, lo que es **fuga de datos**:
+el modelo ya conocería esa plantilla. El split usa `GroupShuffleSplit` agrupando por
+placa (`groups='placa'`), así que todos los parches de una placa caen en un único
+conjunto: **2078 train / 433 val / 442 test**, verificado sin solapamiento.
 
 ## Los 5 pipelines
 
@@ -92,13 +91,13 @@ características manuales, 88.4% F1-macro; ResNet50 end-to-end congelada, 85.7% 
 ## Hallazgos principales
 
 - **El fine-tuning parcial (Pipeline 5) supera con margen amplio a todos los demás
-  enfoques**, incluyendo las características manuales. Esto no invalida la hipótesis
-  del desajuste de dominio — la **refuerza y la refina**: ResNet50 preentrenada en
+  enfoques**, incluidas las características manuales. Esto no invalida la hipótesis
+  del desajuste de dominio: la refuerza y la matiza. ResNet50 preentrenada en
   **ImageNet** (objetos naturales) no encaja bien con la geometría sintética de una PCB
-  mientras sus pesos permanecen **congelados**, pero en cuanto se le permite adaptar su
+  mientras sus pesos permanecen **congelados**. En cuanto se le permite adaptar su
   bloque convolucional más profundo (`conv5_x`) al dominio, con una tasa de aprendizaje
-  lo bastante baja para no destruir el preentrenamiento, termina encontrando una
-  representación mejor que cualquier descriptor manual.
+  lo bastante baja para no destruir el preentrenamiento, encuentra una representación
+  mejor que cualquier descriptor manual.
 - **Sin fine-tuning, las características manuales superan a las características
   profundas congeladas** (Pipelines 1–2 por encima de los Pipelines 3–4): los
   descriptores geométricos codifican directamente la física del defecto (si el cobre
@@ -107,10 +106,10 @@ características manuales, 88.4% F1-macro; ResNet50 end-to-end congelada, 85.7% 
   enfoques**: es el único defecto que es una ausencia total de material, con una firma
   geométrica inconfundible (un círculo faltante).
 - **`spur` es el cuello de botella en los cuatro primeros pipelines** (recall entre
-  0.45 y 0.70), confundido principalmente con `mouse_bite` — pero su recall **salta a
+  0.45 y 0.70), confundido sobre todo con `mouse_bite`, pero su recall **salta a
   0.89 en el Pipeline 5**. Esto sugiere que la dificultad no era una ambigüedad
-  intrínseca e irresoluble entre ambas clases, sino una limitación de las
-  representaciones disponibles hasta ese punto.
+  irresoluble entre ambas clases. Era una limitación de las representaciones
+  disponibles hasta ese punto.
 
 ## Instalación y uso
 
